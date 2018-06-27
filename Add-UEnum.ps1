@@ -3,6 +3,7 @@ Param(
 	[Parameter()][String]$Path = "",
 	[Parameter()][String]$CppsRoot = "./Implementations",
 	[Parameter()][String]$HeadersRoot = ".",
+	[Parameter()][String[]]$Mods = @(),
 	[Parameter()][Switch]$Force
 )
 
@@ -12,7 +13,7 @@ Param(
 	-CppsRoot $CppsRoot `
 	-HeadersRoot $HeadersRoot `
 	-DeclatationType "enum class" `
-	-DeclarationPrefix "UENUM()" `
+	-DeclarationPrefix "UENUM($([String]::Join(", ", $Mods)))" `
 	-DeclarationNamePrefix E `
 	-IncludeGeneratedHeader `
 	-Force: $Force

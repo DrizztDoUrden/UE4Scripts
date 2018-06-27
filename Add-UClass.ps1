@@ -3,23 +3,69 @@ Param(
 	[Parameter()][String]$Path = "",
 	[Parameter()][String]$CppsRoot = "./Implementations",
 	[Parameter()][String]$HeadersRoot = ".",
-	[Parameter()][Switch]$Force,
-	[Parameter()][Switch]$Actor
+	[Parameter(ParameterSetName = "Base", Mandatory = $true)][String]$Base = "",
+	[Parameter(ParameterSetName = "Base")][String]$BasePath = "",
+	[Parameter()][String[]]$Mods = @(),
+	[Parameter(ParameterSetName = "Common")][Switch]$Force
 )
 
 $body =
 "public:`r`n`t`r`n`t"
 
-if ($Actor)
+$ueIncludes = @("CoreMinimal.h")
+$includes = $null
+
+if ($Base.Length -ne 0)
 {
-	$prefix = "A"
-	$base = "AActor"
+	$finalBase = $Base
+
+	if ($BasePath.Length -eq 0)
+	{
+		switch ($Base)
+		{
+			"UActorComponent" { $ueIncludes += "Components/ActorComponent.h" }
+			"AActor" { $ueIncludes += "GameFramework/Actor.h" }
+			default
+			{
+				$fileName = $Base.Substring(1)
+				$files = Get-ChildItem -Recurse -File -Filter "$fileName.h" | Resolve-Path -Relative
+
+				if (($files | Measure-Object).Count -eq 1)
+				{
+					$includes += $files.Substring(2).Replace("\", "/")
+				}
+			}
+		}
+	}
+	else
+	{
+		if ($BasePath.StartsWith("UE::"))
+		{
+			$BasePath = $BasePath.Substring(4)
+			$ueIncludes += $BasePath
+		}
+		else
+		{
+			$includes += $BasePath
+		}
+	}
+}
+
+if ($finalBase -eq $null -or $finalBase.StartsWith("U"))
+{
+	$prefix = "U"
+
+	if ($finalBase.Length -eq 0)
+	{
+		$finalBase = "UObject"
+	}
 }
 else
 {
-	$prefix = "U"
-	$base = "UObject"
+	$prefix = "A"
 }
+
+$declPrefix = "UCLASS($([String]::Join(", ", $Mods)))"
 
 & $PSScriptRoot/Add-Cpp.ps1 `
 	-Name $Name `
@@ -27,10 +73,11 @@ else
 	-CppsRoot $CppsRoot `
 	-HeadersRoot $HeadersRoot `
 	-DeclatationType class `
-	-DeclarationPrefix "UCLASS()" `
+	-DeclarationPrefix $declPrefix `
 	-DeclarationNamePrefix $prefix `
-	-Base "public $base" `
-	-UEHeaderIncludes "CoreMinimal.h" `
+	-Base "public $finalBase" `
+	-UEHeaderIncludes $ueIncludes `
+	-HeaderIncludes $includes `
 	-BodyContent $body `
 	-IncludeGeneratedHeader `
 	-UsingUC `

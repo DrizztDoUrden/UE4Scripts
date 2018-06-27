@@ -51,11 +51,30 @@ else
 $HeaderPath = ($HeaderPath | Resolve-Path -Relative).Replace("\", "/").Substring(2)
 $CppPath = ($CppPath | Resolve-Path -Relative).Replace("\", "/").Substring(2)
 
+function PrepareHeaderPath([String]$Path)
+{
+	$start = $Path.IndexOf("Public/")
+	$length = "Public/".Length
+
+	if ($start -eq -1)
+	{
+		$start = $Path.IndexOf("Private/")
+		$length = "Private/".Length
+
+		if ($start -eq -1)
+		{
+			return $Path
+		}
+	}
+
+	return $Path.Substring($start + $length)
+}
+
 $HeaderIncludesStr = ""
 
 foreach ($header in $HeaderIncludes)
 {
-	$HeaderIncludesStr += "`r`n#include <$header>";
+	$HeaderIncludesStr += "`r`n#include <$(PrepareHeaderPath $header)>";
 }
 
 if ($HeaderIncludesStr.Length -gt 0 -and $UEHeaderIncludes.Count -gt 0)
@@ -146,7 +165,7 @@ $DeclarationPrefix$DeclatationType $DeclarationNamePrefix$Name$Base
 };"
 
 $CppContent =
-"#include <$HeaderPath>
+"#include <$(PrepareHeaderPath $HeaderPath)>
 "
 
 Set-Content $HeaderPath $HeaderContent;
