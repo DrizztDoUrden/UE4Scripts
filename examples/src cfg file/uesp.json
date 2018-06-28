@@ -1,0 +1,6 @@
+{
+  "CppsRoot": "./Implementations/",
+  "HeadersRoot": ".",
+  "PrivateHeadersRoot": ".",
+  "ProjectRoot": "../.."
+}

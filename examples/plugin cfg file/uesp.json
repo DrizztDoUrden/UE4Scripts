@@ -1,0 +1,6 @@
+{
+  "CppsRoot": "./Private/Implementations",
+  "HeadersRoot": "./Public/RPGCore",
+  "PrivateHeadersRoot": "./Private",
+  "ProjectRoot": "../../../.."
+}
