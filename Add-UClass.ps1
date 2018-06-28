@@ -55,125 +55,12 @@ Param(
 	[String]$BasePath = ""
 )
 
-function Load-Config([String]$cfgPath)
-{
-	return (Get-Content $cfgPath) -join "`r`n" | ConvertFrom-Json
-}
+$startPath = Get-Location
 
-function Parse-Config([String]$cfgPath)
-{
-	if (Test-Path $cfgPath)
-	{
-		return Load-Config $cfgPath
-	}
-	else
-	{
-		$config = New-Object -TypeName PSObject
-		$config | Add-Member -MemberType NoteProperty -Name CppsRoot -Value "."
-		$config | Add-Member -MemberType NoteProperty -Name HeadersRoot -Value "."
-		$config | Add-Member -MemberType NoteProperty -Name ProjectRoot -Value "../.."
-		return $config
-	}
-}
-
-function Get-PluginPath([String]$ProjectRoot, [String]$Name)
-{
-	return "$ProjectRoot/Plugins/$Name/Source/$Name"
-}
-
-function TryResolveFromDirectory([String]$FileName, [String]$Path, [Int]$cutOff)
-{
-	Write-Verbose "Searching for header <$fileName> in <$($Path | Resolve-Path)>..."
-	$files = Get-ChildItem $Path -Recurse -File -Filter $fileName | Resolve-Path -Relative
-
-	if (($files | Measure-Object).Count -eq 1)
-	{
-		$headerPath = $files.Substring($cutOff + 1).Replace("\", "/");
-		$includes += $headerPath
-		Write-Verbose "Using <$headerPath> as base class"
-		return $true
-	}
-
-	return $false
-}
-
-function TryResolve([String]$FileName, [String]$Path, $cfg, [Bool]$IncludePrivate = $false)
-{
-	if ($IncludePrivate -and ($cfg.PrivateHeadersRoot.Length -gt 0) -and ($cfg.PrivateHeadersRoot -ne $cfg.HeadersRoot))
-	{
-		if (TryResolveFromDirectory $FileName $Path/$($cfg.PrivateHeadersRoot) $Path.Length) { return $true }
-	}
-
-	return TryResolveFromDirectory $FileName $Path/$($cfg.HeadersRoot) $Path.Length
-}
-
-function Resolve-Header([String]$FileName)
-{
-	if (-not (TryResolve $fileName . $config $true))
-	{
-		$found = $false
-
-		if ($ProjectRoot.Length -gt 0)
-		{
-			foreach ($pluginSearched in (Get-ChildItem $ProjectRoot/Plugins))
-			{
-				if ($Plugin -eq $pluginSearched -or -not (Test-Path -PathType Leaf $pluginPath/uesp.json)) { continue }
-				$pluginPath = $(Get-PluginPath $ProjectRoot $pluginSearched)
-
-				if (TryResolve $fileName $pluginPath (Load-Config $pluginPath/uesp.json))
-				{
-					$found = $true
-					break
-				}
-			}
-		}
-
-		if (-not $found -and $Plugin.Length -gt 0)
-		{
-			if ($Plugin -eq $pluginSearched -or -not (Test-Path -PathType Leaf $pluginPath/uesp.json)) { continue }
-			$rootSourcePath = "$ProjectRoot/Source/$((Get-Item $ProjectRoot).Name)"
-			TryResolve $fileName $rootSourcePath (Load-Config $rootSourcePath/uesp.json);
-		}
-	}
-}
-
-$CppsRootArg = $CppsRoot
-$HeadersRootArg = $HeadersRoot
-
-if (Test-Path -PathType Leaf $ConfigPath)
-{
-	$config = Parse-Config $ConfigPath
-	$CppsRoot = $config.CppsRoot
-	$HeadersRoot = $config.HeadersRoot
-	$ProjectRoot = $config.ProjectRoot
-}
-
-if ($Plugin.Length -gt 0)
-{
-	$pluginPath = $(Get-PluginPath $ProjectRoot $Plugin)
-
-	if (-not (Test-Path $pluginPath -PathType Container))
-	{
-		throw "-Plugin should be an existing plugin. Possible values: $([String]::Join(', ', (Get-ChildItem $ProjectRoot/Plugins | % Name)))."
-	}
-
-	Set-Location $(Get-PluginPath $ProjectRoot $Plugin)
-	$config = Parse-Config uesp.json
-	$CppsRoot = $config.CppsRoot
-	if ($Private) { $HeadersRoot = $config.PrivateHeadersRoot }
-	else { $HeadersRoot = $config.HeadersRoot }
-	$ProjectRoot = $config.ProjectRoot
-}
-
-if ($CppsRootArg.Length -gt 0) { $CppsRoot = $CppsRootArg }
-if ($HeadersRootArg.Length -gt 0) { $HeadersRoot = $HeadersRootArg }
-
-Write-Verbose "CPPs root: $CppsRoot"
-Write-Verbose "Headers root: $HeadersRoot"
-Write-Verbose "Project root: $ProjectRoot"
-
-$body =
-"public:`r`n`t`r`n`t"
+. "$PSScriptRoot/Implementations/Configs.ps1"
+. "$PSScriptRoot/Implementations/Plugins.ps1"
+. "$PSScriptRoot/Implementations/ResolveHeader.ps1"
+. "$PSScriptRoot/Implementations/ParseConfig.ps1"
 
 $ueIncludes = @("CoreMinimal.h")
 $includes = $null
@@ -226,6 +113,9 @@ else { $prefix = "A" }
 
 $declPrefix = "UCLASS($([String]::Join(", ", $Mods)))"
 
+$body =
+"public:`r`n`t`r`n`t"
+
 & $PSScriptRoot/Add-Cpp.ps1 `
 	-Name $Name `
 	-Path $Path `
@@ -244,3 +134,5 @@ $declPrefix = "UCLASS($([String]::Join(", ", $Mods)))"
 	-UsingUF `
 	-GeneratedBody `
 	-Force: $Force
+
+Set-Location $startPath

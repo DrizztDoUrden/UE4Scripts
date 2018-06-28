@@ -48,8 +48,10 @@ else
 	}
 }
 
-$HeaderPath = ($HeaderPath | Resolve-Path -Relative).Replace("\", "/").Substring(2)
-$CppPath = ($CppPath | Resolve-Path -Relative).Replace("\", "/").Substring(2)
+$HeaderDir = ($HeaderPath.Substring(0, $HeaderPath.LastIndexOfAny("/", "\")) | Resolve-Path -Relative).Replace("\", "/").Substring(2)
+$CppDir = ($CppPath.Substring(0, $HeaderPath.LastIndexOfAny("/", "\")) | Resolve-Path -Relative).Replace("\", "/").Substring(2)
+$HeaderPath = "$HeaderDir/$($HeaderPath.SubString($HeaderPath.LastIndexOfAny("/", "\") + 1))"
+$CppDir = "$CppPath/$($CppPath.SubString($CppPath.LastIndexOfAny("/", "\") + 1))"
 
 function PrepareHeaderPath([String]$Path)
 {
