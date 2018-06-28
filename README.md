@@ -11,9 +11,11 @@ PS> <Path to UE4 root>/Engine/Binaries/DotNET/UnrealBuildTool.exe -projectfiles 
 ```
 
 ## Example of config file for plugin. For source ProjectRoot will likely be ../..
+```
 {
   "CppsRoot": "./Private/Implementations",
   "HeadersRoot": "./Public/RPGCore",
   "PrivateHeadersRoot": "./Private",
   "ProjectRoot": "../../../.."
 }
+```
