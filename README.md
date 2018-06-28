@@ -12,7 +12,7 @@ Should be executed from the source folder of project/plugin
 
 ## Example of config file for plugin.
 
-For project ProjectRoot will likely be ../..
+For project ProjectRoot will likely be `../..`
 
 ```
 {
