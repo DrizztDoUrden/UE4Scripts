@@ -186,9 +186,20 @@ if ($Base.Length -ne 0)
 	{
 		switch ($Base)
 		{
-			"UObject" {}
-			"UActorComponent" { $ueIncludes += "Components/ActorComponent.h" }
-			"AActor" { $ueIncludes += "GameFramework/Actor.h" }
+			"UObject"
+			{
+				Write-Verbose "Using UObject as base"
+			}
+			"UActorComponent"
+			{
+				Write-Verbose "Using UActorComponent as base"
+				$ueIncludes += "Components/ActorComponent.h"
+			}
+			"AActor"
+			{
+				Write-Verbose "Using AActor as base"
+				$ueIncludes += "GameFramework/Actor.h"
+			}
 			default
 			{
 				$fileName = $Base.Substring(1)
