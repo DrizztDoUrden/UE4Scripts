@@ -2,10 +2,9 @@
 
 ## Example for UClass:
 
-Should be executed from Source folder of project/plugin
-```
-PS> Add-UClass.ps1 -Path Abilities -base UAreaAbility -Name CircleAbility
-```
+Should be executed from the source folder of project/plugin
+
+`PS> Add-UClass.ps1 -Path Abilities -base UAreaAbility -Name CircleAbility`
 
 ## How to refresh solution from console:
 
@@ -13,7 +12,8 @@ PS> Add-UClass.ps1 -Path Abilities -base UAreaAbility -Name CircleAbility
 
 ## Example of config file for plugin.
 
-For source ProjectRoot will likely be ../..
+For poject ProjectRoot will likely be ../..
+
 ```
 {
   "CppsRoot": "./Private/Implementations",
