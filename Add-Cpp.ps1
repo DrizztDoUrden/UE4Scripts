@@ -44,14 +44,35 @@ else
 {
 	if (-not $Force)
 	{
-		throw "Cpp with such name already existsc ($($CppPath | Resolve-Path -Relative))"
+		throw "Cpp with such name already exists ($($CppPath | Resolve-Path -Relative))"
 	}
 }
 
-$HeaderDir = ($HeaderPath.Substring(0, $HeaderPath.LastIndexOfAny("/", "\")) | Resolve-Path -Relative).Replace("\", "/").Substring(2)
-$CppDir = ($CppPath.Substring(0, $HeaderPath.LastIndexOfAny("/", "\")) | Resolve-Path -Relative).Replace("\", "/").Substring(2)
-$HeaderPath = "$HeaderDir/$($HeaderPath.SubString($HeaderPath.LastIndexOfAny("/", "\") + 1))"
-$CppDir = "$CppPath/$($CppPath.SubString($CppPath.LastIndexOfAny("/", "\") + 1))"
+$headerDirSep = [Math]::Max($HeaderPath.LastIndexOf("/"), $HeaderPath.LastIndexOf("\"))
+$cppDirSep = [Math]::Max($CppPath.LastIndexOf("/"), $CppPath.LastIndexOf("\"))
+
+if ($headerDirSep -gt -1)
+{
+	$HeaderDir = $HeaderPath.Substring(0, $headerDirSep + 1)
+	$HeaderDir = ($HeaderDir | Resolve-Path -Relative).Substring(2).Replace("\", "/")
+}
+else
+{
+	$HeaderDir = ""
+}
+
+if ($cppDirSep -gt -1)
+{
+	$CppDir = $CppPath.Substring(0, $cppDirSep)
+	$CppDir = ($CppDir | Resolve-Path -Relative).Substring(2).Replace("\", "/")
+}
+else
+{
+	$CppDir = ""
+}
+
+$HeaderPath = "$HeaderDir$($HeaderPath.SubString($headerDirSep + 1))"
+$CppDir = "$CppPath$($CppPath.SubString($cppDirSep + 1))"
 
 function PrepareHeaderPath([String]$Path)
 {
