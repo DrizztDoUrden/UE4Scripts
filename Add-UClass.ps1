@@ -36,7 +36,7 @@ Param(
 	# UCLASS modifiers like BlueprintType
 	[Parameter()]
 	[String[]]$Mods = @(),
-	# Path to the config
+	# Path to the config. Should be relative to cwd or to cwd/Source/$(cwd name). Should be a JSON object with fields CppsRoot, HeadersRoot, PrivateHeadersRoot, ProjectRoot
 	[Parameter()]
 	[String]$ConfigPath = "uesp.json",
 	# Generate header as private
