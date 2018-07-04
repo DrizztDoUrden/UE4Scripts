@@ -1,3 +1,5 @@
+. "$PSScriptRoot/Configs.ps1"
+
 $CppsRootArg = $CppsRoot
 $HeadersRootArg = $HeadersRoot
 
