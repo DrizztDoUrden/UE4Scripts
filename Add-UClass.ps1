@@ -16,7 +16,7 @@ Param(
 	# Name of the class generated
 	[Parameter(Mandatory=$true)]
 	[String]$Name,
-	# Name of plugin to generate class for
+	# Name of plugin to generate class for. Root means project root
 	[Parameter(ParameterSetName = "Plugin", Mandatory = $true)]
 	[Parameter(ParameterSetName = "PluginBase", Mandatory = $true)]
 	[String]$Plugin = "",

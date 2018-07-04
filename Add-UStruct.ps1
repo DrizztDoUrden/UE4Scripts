@@ -17,7 +17,7 @@ Param(
 	# Name of the struct generated
 	[Parameter(Mandatory=$true)]
 	[String]$Name,
-	# Name of plugin to generate struct for
+	# Name of plugin to generate struct for. Root means project root
 	[Parameter()]
 	[String]$Plugin = "",
 	# Relative path to the class header and implementation
