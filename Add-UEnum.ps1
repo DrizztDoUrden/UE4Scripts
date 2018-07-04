@@ -44,7 +44,6 @@ Param(
 
 $startPath = Get-Location
 
-. "$PSScriptRoot/Implementations/Plugins.ps1"
 . "$PSScriptRoot/Implementations/ParseConfig.ps1"
 
 & $PSScriptRoot/Add-Cpp.ps1 `

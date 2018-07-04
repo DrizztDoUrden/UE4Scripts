@@ -57,56 +57,12 @@ Param(
 
 $startPath = Get-Location
 
-. "$PSScriptRoot/Implementations/Configs.ps1"
-. "$PSScriptRoot/Implementations/Plugins.ps1"
-. "$PSScriptRoot/Implementations/ResolveHeader.ps1"
 . "$PSScriptRoot/Implementations/ParseConfig.ps1"
 
 $ueIncludes = @("CoreMinimal.h")
 $includes = $null
 
-if ($Base.Length -ne 0)
-{
-	$finalBase = $Base
-
-	if ($BasePath.Length -eq 0)
-	{
-		switch ($Base)
-		{
-			"UObject"
-			{
-				Write-Verbose "Using UObject as base"
-			}
-			"UActorComponent"
-			{
-				Write-Verbose "Using UActorComponent as base"
-				$ueIncludes += "Components/ActorComponent.h"
-			}
-			"AActor"
-			{
-				Write-Verbose "Using AActor as base"
-				$ueIncludes += "GameFramework/Actor.h"
-			}
-			default
-			{
-				$fileName = $Base.Substring(1)
-				Resolve-Header "$fileName.h"
-			}
-		}
-	}
-	else
-	{
-		if ($BasePath.StartsWith("UE::"))
-		{
-			$BasePath = $BasePath.Substring(4)
-			$ueIncludes += $BasePath
-		}
-		else
-		{
-			$includes += $BasePath
-		}
-	}
-}
+. "$PSScriptRoot/Implementations/ResolveBase.ps1"
 
 if ($finalBase.StartsWith("U")) { $prefix = "U" }
 else { $prefix = "A" }

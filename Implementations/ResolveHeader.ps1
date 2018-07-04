@@ -1,3 +1,5 @@
+. "$PSScriptRoot/Configs.ps1"
+
 function TryResolveFromDirectory([String]$FileName, [String]$Path, [Int]$cutOff)
 {
 	Write-Verbose "Searching for header <$fileName> in <$($Path | Resolve-Path)>..."
