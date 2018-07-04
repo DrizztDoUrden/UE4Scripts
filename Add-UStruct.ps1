@@ -12,7 +12,6 @@ Supports usage of configuration files for saving some parameter values. It shoul
 }
 #>
 
-
 Param(
 	# Name of the struct generated
 	[Parameter(Mandatory=$true)]
@@ -20,7 +19,7 @@ Param(
 	# Name of plugin to generate struct for. Root means project root
 	[Parameter()]
 	[String]$Plugin = "",
-	# Relative path to the class header and implementation
+	# Relative path to the struct header and implementation
 	[Parameter()]
 	[String]$Path = "",
 	# Directory containing cpp files. Possible values: provided > found in config > plugin sources root > .
@@ -29,7 +28,7 @@ Param(
 	# Directory containing header files. Possible values: provided > found in config > plugin sources root > .
 	[Parameter()]
 	[String]$HeadersRoot = "",
-	# UCLASS modifiers like BlueprintType
+	# USTRUCT modifiers like BlueprintType
 	[Parameter()]
 	[String[]]$Mods = @(),
 	# Path to the config. Should be relative to cwd or to cwd/Source/$(cwd name). Should be a JSON object with fields CppsRoot, HeadersRoot, PrivateHeadersRoot, ProjectRoot
