@@ -59,7 +59,7 @@ $startPath = Get-Location
 
 . "$PSScriptRoot/Implementations/ParseConfig.ps1"
 
-$ueIncludes = @("CoreMinimal.h")
+$ueIncludes = @("CoreMinimal.h", "ObjectMacros.h")
 $includes = $null
 
 . "$PSScriptRoot/Implementations/ResolveBase.ps1"

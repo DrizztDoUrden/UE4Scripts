@@ -54,7 +54,7 @@ $startPath = Get-Location
 	-DeclatationType struct `
 	-DeclarationPrefix "USTRUCT($([String]::Join(", ", $Mods)))" `
 	-DeclarationNamePrefix F `
-	-UEHeaderIncludes "CoreMinimal.h" `
+	-UEHeaderIncludes "CoreMinimal.h", "ObjectMacros.h" `
 	-IncludeGeneratedHeader `
 	-UsingUS `
 	-UsingUP `

@@ -54,6 +54,7 @@ $startPath = Get-Location
 	-DeclatationType "enum class" `
 	-DeclarationPrefix "UENUM($([String]::Join(", ", $Mods)))" `
 	-DeclarationNamePrefix E `
+	-UEHeaderIncludes "ObjectMacros.h" `
 	-IncludeGeneratedHeader `
 	-Force: $Force
 	
