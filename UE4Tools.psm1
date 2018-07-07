@@ -94,16 +94,18 @@ class UE4CfgFile
 	[String]$cpps
 	[String]$root
 	[String]$location
+	[String]$filename
 
 	UE4CfgFile([String]$path)
 	{
 		$found = Test-Path $path -PathType Leaf
 		$this.location = "."
+		$this.filename = $path
 
 		if (-not $found -and ((Test-Path -PathType Leaf "*.uproject") -or (Test-Path -PathType Leaf "*.uplugin")))
 		{
+			$this.location = "Source/$((Get-Item .).Name)"
 			$found = Test-Path "Source/$((Get-Item .).Name)/$path" -PathType Leaf
-			if ($found) { $this.location = "Source/$((Get-Item .).Name)" }
 		}
 
 		if ($found)
@@ -123,6 +125,16 @@ class UE4CfgFile
 			$this.privateHeaders = "."
 			$this.root = "../.."
 		}
+	}
+
+	[void]Save()
+	{
+		@{
+			CppsRoot = $this.cpps;
+			HeadersRoot = $this.headers;
+			PrivateHeadersRoot = $this.privateHeaders;
+			ProjectRoot = $this.root;
+		} | ConvertTo-Json | Out-File "$($this.location)/$($this.filename)"
 	}
 }
 
@@ -203,18 +215,6 @@ function PluginLocation([String]$Plugin, [UE4CfgFile]$cfg)
 	return ""
 }
 
-$PluginCompletion = {
-	param($commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameter)
-
-	$ConfigPath = $fakeBoundParameter.ConfigPath
-	if ($ConfigPath.Length -eq 0) { $ConfigPath = "uesp.json" }
-
-	$suggestions = @("root")
-	$cfg = [UE4CfgFile]::New($ConfigPath)
-	foreach ($plugin in (Get-ChildItem "$($cfg.location)/$($cfg.root)/Plugins")) { $suggestions += $plugin }
-	$suggestions | ? { $_ -like "$wordToComplete*" } | Sort-Object | % { New-CompletionResult -CompletionText $_ }
-}
-
 function Get-HeaderPath([UE4CfgFile]$cfg, [String]$HeadersRoot, [Bool]$Private)
 {
 	if ($HeadersRoot.Length -eq 0)
@@ -245,6 +245,18 @@ function Make-DefaultCpp([String]$Path, [String]$Name)
 	$cpp = [CppFile]::New()
 	$cpp.includes = @("$Path/$Name.h")
 	$cpp
+}
+
+$PluginCompletion = {
+	param($commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameter)
+
+	$ConfigPath = $fakeBoundParameter.ConfigPath
+	if ($ConfigPath.Length -eq 0) { $ConfigPath = "uesp.json" }
+
+	$suggestions = @("root")
+	$cfg = [UE4CfgFile]::New($ConfigPath)
+	foreach ($plugin in (Get-ChildItem "$($cfg.location)/$($cfg.root)/Plugins")) { $suggestions += $plugin }
+	$suggestions | ? { $_ -like "$wordToComplete*" } | Sort-Object | % { New-CompletionResult -CompletionText $_ }
 }
 
 <#
@@ -333,7 +345,11 @@ function Add-Class
 	{
 		$cfg = [UE4CfgFile]::New($ConfigPath)
 		$pluginPath = PluginLocation $Plugin $cfg
-		if ($pluginPath.Length -gt 0) { $cfg = [UE4CfgFile]::New("$pluginPath/uesp.json") }
+		if ($pluginPath.Length -gt 0)
+		{
+			$ConfigPath = "$pluginPath/$ConfigPath"
+			$cfg = [UE4CfgFile]::New($ConfigPath)
+		}
 
 		$headerPath = Get-HeaderPath -cfg $cfg -HeadersRoot $HeadersRoot -Private $Private
 		$cppPath = Get-CppPath -cfg $cfg -CppsRoot $CppsRoot
@@ -413,7 +429,11 @@ function Add-Struct
 	{
 		$cfg = [UE4CfgFile]::New($ConfigPath)
 		$pluginPath = PluginLocation $Plugin $cfg
-		if ($pluginPath.Length -gt 0) { $cfg = [UE4CfgFile]::New("$pluginPath/uesp.json") }
+		if ($pluginPath.Length -gt 0)
+		{
+			$ConfigPath = "$pluginPath/$ConfigPath"
+			$cfg = [UE4CfgFile]::New($ConfigPath)
+		}
 
 		$headerPath = Get-HeaderPath -cfg $cfg -HeadersRoot $HeadersRoot -Private $Private
 		$cppPath = Get-CppPath -cfg $cfg -CppsRoot $CppsRoot
@@ -488,7 +508,11 @@ function Add-UEnum
 	{
 		$cfg = [UE4CfgFile]::New($ConfigPath)
 		$pluginPath = PluginLocation $Plugin $cfg
-		if ($pluginPath.Length -gt 0) { $cfg = [UE4CfgFile]::New("$pluginPath/uesp.json") }
+		if ($pluginPath.Length -gt 0)
+		{
+			$ConfigPath = "$pluginPath/$ConfigPath"
+			$cfg = [UE4CfgFile]::New($ConfigPath)
+		}
 
 		$headerPath = Get-HeaderPath -cfg $cfg -HeadersRoot $HeadersRoot -Private $Private
 		$cppPath = Get-CppPath -cfg $cfg -CppsRoot $CppsRoot
@@ -541,6 +565,7 @@ function Add-UStruct
 		[String]$Path = "",
 		# Modifiers like BlueprintType
 		[Parameter()]
+		[ValidateSet("NoExport", "Atomic", "Immutable", "BlueprintType", "BlueprintInternalUseOnly")]
 		[String[]]$Mods = @(),
 		# Directory containing cpp files. Possible values: provided > found in config > plugin sources root > .
 		[Parameter()]
@@ -564,7 +589,11 @@ function Add-UStruct
 	{
 		$cfg = [UE4CfgFile]::New($ConfigPath)
 		$pluginPath = PluginLocation $Plugin $cfg
-		if ($pluginPath.Length -gt 0) { $cfg = [UE4CfgFile]::New("$pluginPath/uesp.json") }
+		if ($pluginPath.Length -gt 0)
+		{
+			$ConfigPath = "$pluginPath/$ConfigPath"
+			$cfg = [UE4CfgFile]::New($ConfigPath)
+		}
 
 		$headerPath = Get-HeaderPath -cfg $cfg -HeadersRoot $HeadersRoot -Private $Private
 		$cppPath = Get-CppPath -cfg $cfg -CppsRoot $CppsRoot
@@ -578,6 +607,7 @@ function Add-UStruct
 		$header.includes = @()
 		$header.generatedInclude = "$Name.generated.h"
 		$header.declarations = @($decl)
+		$header.usingNamespaces = @("US", "UP", "UM")
 
 		$decl.prefix = "USTRUCT($([String]::Join(", ", $Mods)))"
 		$decl.declarationType = "struct"
@@ -617,6 +647,7 @@ function Add-UInterface
 		[String]$Path = "",
 		# Modifiers like BlueprintType
 		[Parameter()]
+		[ValidateSet("MinimalAPI", "Blueprintable", "NotBlueprintable", "ConversionRoot")]
 		[String[]]$Mods = @(),
 		# Directory containing cpp files. Possible values: provided > found in config > plugin sources root > .
 		[Parameter()]
@@ -640,7 +671,11 @@ function Add-UInterface
 	{
 		$cfg = [UE4CfgFile]::New($ConfigPath)
 		$pluginPath = PluginLocation $Plugin $cfg
-		if ($pluginPath.Length -gt 0) { $cfg = [UE4CfgFile]::New("$pluginPath/uesp.json") }
+		if ($pluginPath.Length -gt 0)
+		{
+			$ConfigPath = "$pluginPath/$ConfigPath"
+			$cfg = [UE4CfgFile]::New($ConfigPath)
+		}
 
 		$headerPath = Get-HeaderPath -cfg $cfg -HeadersRoot $HeadersRoot -Private $Private
 		$cppPath = Get-CppPath -cfg $cfg -CppsRoot $CppsRoot
@@ -655,6 +690,7 @@ function Add-UInterface
 		$header.includes = @()
 		$header.generatedInclude = "$Name.generated.h"
 		$header.declarations = @($udecl, $idecl)
+		$header.usingNamespaces = @("UI", "UF", "UM")
 
 		$udecl.prefix = "UINTERFACE($([String]::Join(", ", $Mods)))"
 		$udecl.declarationType = "class"
@@ -706,6 +742,11 @@ function Add-UClass
 		[String]$Path = "",
 		# Modifiers like BlueprintType
 		[Parameter()]
+		[ValidateSet("classGroup", "Within", "BlueprintType", "NotBlueprintType", "Blueprintable", "NotBlueprintable", "MinimalAPI", "customConstructor", "Intrinsic",
+			"noexport", "placeable", "notplaceable", "DefaultToInstanced", "Const", "Abstract", "deprecated", "Transient", "nonTransient", "config",  "perObjectConfig",
+			"configdonotcheckdefaults", "defaultconfig", "editinlinenew", "noteditinlinenew", "hidedropdown", "showCategories", "hideCategories", "ComponentWrapperClass",
+			"showFunctions", "hideFunctions", "autoExpandCategories", "autoCollapseCategories", "dontAutoCollapseCategories", "collapseCategories", "dontCollapseCategories",
+			"AdvancedClassDisplay", "ConversionRoot", "Experimental", "EarlyAccessPreview")]
 		[String[]]$Mods = @(),
 		# Directory containing cpp files. Possible values: provided > found in config > plugin sources root > .
 		[Parameter()]
@@ -735,7 +776,11 @@ function Add-UClass
 	{
 		$cfg = [UE4CfgFile]::New($ConfigPath)
 		$pluginPath = PluginLocation $Plugin $cfg
-		if ($pluginPath.Length -gt 0) { $cfg = [UE4CfgFile]::New("$pluginPath/uesp.json") }
+		if ($pluginPath.Length -gt 0)
+		{
+			$ConfigPath = "$pluginPath/$ConfigPath"
+			$cfg = [UE4CfgFile]::New($ConfigPath)
+		}
 
 		$headerPath = Get-HeaderPath -cfg $cfg -HeadersRoot $HeadersRoot -Private $Private
 		$cppPath = Get-CppPath -cfg $cfg -CppsRoot $CppsRoot
@@ -748,6 +793,7 @@ function Add-UClass
 		$header.ueIncludes = @("CoreMinimal.h")
 		$header.includes = @()
 		$header.declarations = @($decl)
+		$header.usingNamespaces = @("UC", "UP", "UF", "UM")
 
 		$namePrefix = $Base[0]
 		$decl.bases += $Base
@@ -779,7 +825,58 @@ function Add-UClass
 	}
 }
 
-foreach ($export in @("Set-Plugin", "Add-Class", "Add-Struct", "Add-UEnum", "Add-UStruct", "Add-UInterface", "Add-UClass"))
+<#
+.SYNOPSIS
+Updates configuration file
+
+.DESCRIPTION
+Supports usage of configuration files for saving some parameter values. It should be placed to source root with name uesp.json for full support. Cfg file format:
+{
+  "CppsRoot": "<path to implementations>",
+  "HeadersRoot": "<path to public headers>",
+  "PrivateHeadersRoot": "<path to private headers>",
+  "ProjectRoot": "<path to the project root for header search and plugin system>"
+}
+#>
+function Update-Config
+{
+	[CmdletBinding()]
+	Param(
+		# Name of plugin to generate class for. Root means project root
+		[Parameter(ParameterSetName = "Plugin", Mandatory = $true)]
+		[String]$Plugin = "",
+		# Path to the config. Should be relative to cwd or to cwd/Source/$(cwd name). Should be a JSON object with fields CppsRoot, HeadersRoot, PrivateHeadersRoot, ProjectRoot
+		[Parameter()]
+		[String]$ConfigPath = "uesp.json",
+		[Parameter()]
+		[String]$CppsRoot,
+		[Parameter()]
+		[String]$PublicHeaders,
+		[Parameter()]
+		[String]$PrivateHeaders,
+		[Parameter()]
+		[String]$Root
+	)
+	begin
+	{
+		$cfg = [UE4CfgFile]::New($ConfigPath)
+		$pluginPath = PluginLocation $Plugin $cfg
+		if ($pluginPath.Length -gt 0)
+		{
+			$ConfigPath = "$pluginPath/$ConfigPath"
+			$cfg = [UE4CfgFile]::New($ConfigPath)
+		}
+
+		if ($CppsRoot.Length -gt 0) { $cfg.cpps = $CppsRoot }
+		if ($PublicHeaders.Length -gt 0) { $cfg.cpps = $PublicHeaders }
+		if ($PrivateHeaders.Length -gt 0) { $cfg.cpps = $PrivateHeaders }
+		if ($Root.Length -gt 0) { $cfg.cpps = $Root }
+
+		$cfg.Save()
+	}
+}
+
+foreach ($export in @("Set-Plugin", "Add-Class", "Add-Struct", "Add-UEnum", "Add-UStruct", "Add-UInterface", "Add-UClass",  "Update-Config"))
 {
 	Export-ModuleMember -Function $export
 	Register-ArgumentCompleter -CommandName $export -ParameterName Plugin -ScriptBlock $PluginCompletion
