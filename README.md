@@ -2,9 +2,13 @@
 
 ## Example for UClass:
 
+To import module:
+
+`PS> Import-Module <path to module>`
+
 Should be executed from the source folder of project/plugin
 
-`PS> Add-UClass.ps1 -Path Abilities -base UAreaAbility -Name CircleAbility`
+`PS> Add-UClass -Path Abilities -base UAreaAbility -Name CircleAbility`
 
 ## How to refresh solution from console:
 
