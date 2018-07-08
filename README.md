@@ -1,10 +1,22 @@
 # UE4Scripts
 
+Requires TabExpansionPlusPlus, to intall:
+
+`PS> Install-Module TabExpansionPlusPlus`
+
 ## Example for UClass:
 
 To import module:
 
 `PS> Import-Module <path to module>`
+
+To get all available commands:
+
+`Get-Command -Module UE4Tools`
+
+To get help about specific command:
+
+`Get-Help Add-UClass -Detailed`
 
 Should be executed from the source folder of project/plugin
 

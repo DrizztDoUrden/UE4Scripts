@@ -1,5 +1,3 @@
-Import-Module TabExpansionPlusPlus
-
 function Add-Prefix(
 	[String]$prefix,
 	[Parameter(ValueFromPipeline=$true)]
