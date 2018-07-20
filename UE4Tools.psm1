@@ -236,7 +236,7 @@ function Get-CppPath([UE4CfgFile]$cfg, [String]$CppsRoot)
 
 function Generate-File([String]$Content, [String]$Path, [Bool]$WhatIf)
 {
-	Write-Verbose ">>>>>>>>>> File start ($(Resolve-Path $Path -Relative)):`r`n$Content`r`n>>>>>>>>>> File end."
+	Write-Verbose ">>>>>>>>>> File start ($Path):`r`n$Content`r`n>>>>>>>>>> File end."
 	New-Item -Force $Path -Value $Content -WhatIf:$WhatIf
 }
 
