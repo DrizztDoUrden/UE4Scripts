@@ -39,30 +39,47 @@ class CppFile
 	[String[]]$usingNamespaces
 	[CppTypeDeclaration[]]$declarations
 
-	[String]GenerateHeadersSection([String[]]$headers)
+	[String]GenerateHeadersSection([String[]]$headers, [Bool]$first)
 	{
 		$body = ""
-		if ($headers.Length -gt 0) { $body += "`r`n" }
-		foreach ($header in ($headers | Sort-Object)) { $body += "`r`n#include <$header>" }
+		if ($headers.Length -gt 0 -and -not $first) { $body += "`r`n" }
+
+		foreach ($header in ($headers | Sort-Object))
+		{
+			if (-not $first) { $body += "`r`n" }
+			$body += "#include <$header>"
+			$first = $false
+		}
 
 		return $body
 	}
 
-	[String]GenerateHeaders()
+	[String]GenerateHeaders([Bool]$first)
 	{
-		$body = $this.GenerateHeadersSection($this.includes)
-		$body += $this.GenerateHeadersSection($this.ueIncludes)
-		$body += $this.GenerateHeadersSection($this.stdIncludes)
-		if ($this.generatedInclude.Length -gt 0) { $body += "`r`n`r`n#include `"$($this.generatedInclude)`"" }
+		$body = $this.GenerateHeadersSection($this.includes, $first)
+		$body += $this.GenerateHeadersSection($this.ueIncludes, $first -and $body.Length -eq 0)
+		$body += $this.GenerateHeadersSection($this.stdIncludes, $first -and $body.Length -eq 0)
+
+		if ($this.generatedInclude.Length -gt 0)
+		{
+			if (-not ($first -and $body.Length -eq 0)) { $body += "`r`n`r`n" }
+			$body += "#include `"$($this.generatedInclude)`""
+		}
 
 		return $body
 	}
 
-	[String]GenerateUsings()
+	[String]GenerateUsings([Bool]$first)
 	{
 		$body = ""
-		if ($this.usingNamespaces.Length -gt 0) { $body += "`r`n" }
-		foreach ($using in $this.usingNamespaces) { $body += "`r`nusing namespace $using;" }
+		if ($this.usingNamespaces.Length -gt 0 -and -not $first) { $body += "`r`n" }
+
+		foreach ($using in $this.usingNamespaces)
+		{
+			if (-not $first) { $body += "`r`n" }
+			$body += "using namespace $using;"
+			$first = $false
+		}
 
 		return $body
 	}
@@ -71,12 +88,12 @@ class CppFile
 	{
 		$body = ""
 		if ($IsHeader) { $body += "#pragma once" }
-		$body += $this.GenerateHeaders()
-		$body += $this.GenerateUsings()
+		$body += $this.GenerateHeaders($body.Length -eq 0)
+		$body += $this.GenerateUsings($body.Length -eq 0)
 
 		foreach ($declaration in $this.declarations)
 		{
-			$body += "`r`n`r`n"
+			if ($body.Length -gt 0) { $body += "`r`n`r`n" }
 			$body += $declaration.Generate() + ";"
 		}
 
