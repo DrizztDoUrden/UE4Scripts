@@ -77,7 +77,7 @@ class CppFile
 		foreach ($declaration in $this.declarations)
 		{
 			$body += "`r`n`r`n"
-			$body += $declaration.Generate()
+			$body += $declaration.Generate() + ";"
 		}
 
 		$body += "`r`n"
