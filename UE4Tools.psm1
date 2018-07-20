@@ -243,7 +243,7 @@ function Generate-File([String]$Content, [String]$Path, [Bool]$WhatIf)
 function Make-DefaultCpp([String]$Path, [String]$Name)
 {
 	$cpp = [CppFile]::New()
-	$cpp.includes = @("$Path/$Name.h")
+	$cpp.includes = if ($Path.Length -gt 0 -and $Path -ne "." -and $Path -ne "./") { @("$Path/$Name.h") } else { @("$Name.h")}
 	$cpp
 }
 
