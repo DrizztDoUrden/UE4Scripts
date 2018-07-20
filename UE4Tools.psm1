@@ -96,20 +96,22 @@ class UE4CfgFile
 
 	UE4CfgFile([String]$path)
 	{
+		$sep = $path.LastIndexOf('/');
 		$found = Test-Path $path -PathType Leaf
-		$this.location = "."
-		$this.filename = $path
+		$this.location = if ($sep -ge 0) { $path.Substring(0, $sep) } else { "." }
+		$this.filename = if ($sep -ge 0) { $path.Substring($sep + 1) } else { $path }
 
-		if (-not $found -and ((Test-Path -PathType Leaf "*.uproject") -or (Test-Path -PathType Leaf "*.uplugin")))
+		if (-not $found -and ((Test-Path -PathType Leaf "$($this.location)/*.uproject") -or (Test-Path -PathType Leaf "$($this.location)/*.uplugin")))
 		{
-			$this.location = "Source/$((Get-Item .).Name)"
-			$found = Test-Path "Source/$((Get-Item .).Name)/$path" -PathType Leaf
+			$this.location = "$($this.location)/Source/$((Get-Item ($this.location)).Name)"
+			$found = Test-Path "$($this.location)/$($this.filename)" -PathType Leaf
 		}
 
 		if ($found)
 		{
-			Write-Verbose "Parsing config at <$(Resolve-Path "$($this.location)/$path")>..."
-			$file = (Get-Content "$($this.location)/$path") -join "`r`n" | ConvertFrom-Json
+			$path = "$($this.location)/$($this.filename)";
+			Write-Verbose "Parsing config at <$(Resolve-Path $path -Relative)>..."
+			$file = (Get-Content "$path") -join "`r`n" | ConvertFrom-Json
 			$this.cpps = $file.CppsRoot
 			$this.headers = $file.HeadersRoot
 			$this.privateHeaders = $file.PrivateHeadersRoot
@@ -234,7 +236,7 @@ function Get-CppPath([UE4CfgFile]$cfg, [String]$CppsRoot)
 
 function Generate-File([String]$Content, [String]$Path, [Bool]$WhatIf)
 {
-	Write-Verbose ">>>>>>>>>> File start ($Path):`r`n$Content`r`n>>>>>>>>>> File end."
+	Write-Verbose ">>>>>>>>>> File start ($(Resolve-Path $Path -Relative)):`r`n$Content`r`n>>>>>>>>>> File end."
 	New-Item -Force $Path -Value $Content -WhatIf:$WhatIf
 }
 
