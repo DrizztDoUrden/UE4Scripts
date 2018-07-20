@@ -629,6 +629,7 @@ function Add-UStruct
 		$decl.prefix = "USTRUCT($([String]::Join(", ", $Mods)))"
 		$decl.declarationType = "struct"
 		$decl.Name = "F$Name"
+		$decl.body = "    GENERATED_BODY()`r`n`r`n"
 
 		$cpp = Make-DefaultCpp -Path $Path -Name $Name
 		Generate-File -Content $header.Generate($true) -Path $headerPath -WhatIf $WhatIf
@@ -834,7 +835,7 @@ function Add-UClass
 		else { $header.includes += $BasePath }
 		
 		$decl.prefix = "UCLASS($([String]::Join(", ", $Mods)))"
-		$decl.body = "public:`r`n`t`r`n`t"
+		$decl.body = "    GENERATED_BODY()`r`n`r`npublic:`r`n`r`n"
 		$decl.declarationType = "class"
 		$decl.Name = "$namePrefix$Name"
 
