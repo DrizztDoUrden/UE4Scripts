@@ -814,7 +814,8 @@ function Add-UClass
 			}
 		}
 		else { $header.includes += $BasePath }
-
+		
+		$decl.prefix = "UCLASS($([String]::Join(", ", $Mods)))"
 		$decl.body = "public:`r`n`t`r`n`t"
 		$decl.declarationType = "class"
 		$decl.Name = "$namePrefix$Name"
