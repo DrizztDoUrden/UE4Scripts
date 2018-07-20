@@ -794,6 +794,7 @@ function Add-UClass
 		$header.includes = @()
 		$header.declarations = @($decl)
 		$header.usingNamespaces = @("UC", "UP", "UF", "UM")
+		$header.generatedInclude = "$Name.generated.h"
 
 		$namePrefix = $Base[0]
 		$decl.bases += $Base
