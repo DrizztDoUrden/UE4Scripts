@@ -26,6 +26,10 @@ Should be executed from the source folder of project/plugin
 
 `PS> <UE4 root>/Engine/Binaries/DotNET/UnrealBuildTool.exe -projectfiles -project="<project root>/SoD4X.uproject" -game -rocket -progress`
 
+or
+
+`PS> Update-Project -EnginePath <UE4 root>`
+
 ## Example of config file for plugin.
 
 For project ProjectRoot will likely be `../..`
