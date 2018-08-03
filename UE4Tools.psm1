@@ -930,8 +930,8 @@ function Update-ProjectIncludes
 
 		if ($ProjectName.Length -eq 0) { $ProjectName = (Get-Item $root).BaseName }
 
-		$ProjectFileName = Resolve-Path "$root/Intermediate/ProjectFiles/$ProjectName.vcxproj"
-		[xml]$projectFile = Get-Content $ProjectFileName
+		$ProjectFilePath = Resolve-Path "$root/Intermediate/ProjectFiles/$ProjectName.vcxproj"
+		[xml]$projectFile = Get-Content $ProjectFilePath
 
 		foreach ($propertyGroup in $projectFile.Project.PropertyGroup)
 		{
@@ -964,7 +964,7 @@ function Update-ProjectIncludes
 			}
 		}
 
-		$projectFile.Save($ProjectFileName)
+		$projectFile.Save($ProjectFilePath)
 	}
 }
 
@@ -997,12 +997,17 @@ function Update-Project
 	)
 	begin
 	{
-		& "$EnginePath/Engine/Binaries/DotNET/UnrealBuildTool.exe" -projectfiles -project="C:/Code/UE4/SoD4X/SoD4X.uproject" -game -rocket -progress
+		$cfg = [UE4CfgFile]::New($ConfigPath)
+		$root = "$($cfg.location)/$($cfg.root)"
+
+		if ($ProjectName.Length -eq 0) { $ProjectName = (Get-Item $root).BaseName }
+
+		& "$EnginePath/Engine/Binaries/DotNET/UnrealBuildTool.exe" -projectfiles -project="$root/$ProjectName.uproject" -game -rocket -progress
 		Update-ProjectIncludes -ConfigPath $ConfigPath -ProjectName $ProjectName
 	}
 }
 
-foreach ($export in @("Set-Plugin", "Add-Class", "Add-Struct", "Add-UEnum", "Add-UStruct", "Add-UInterface", "Add-UClass", "Update-Config"))
+foreach ($export in @("Set-Plugin", "Add-Class", "Add-Struct", "Add-UEnum", "Add-UStruct", "Add-UInterface", "Add-UClass",  "Update-Config", "Update-ProjectIncludes"))
 {
 	Export-ModuleMember -Function $export
 	Register-ArgumentCompleter -CommandName $export -ParameterName Plugin -ScriptBlock $PluginCompletion
