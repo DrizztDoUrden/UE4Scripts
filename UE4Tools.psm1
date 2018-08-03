@@ -896,6 +896,8 @@ function Update-Config
 	}
 }
 
+$pgConditionRegex = [regex]"(?<Type>Game|Editor)\|(?<Arch>x64|Win32)"
+
 <#
 .SYNOPSIS
 Updates project file if it doesn't have include paths to .generated.h files.
@@ -933,18 +935,31 @@ function Update-ProjectIncludes
 
 		foreach ($propertyGroup in $projectFile.Project.PropertyGroup)
 		{
-			if ($propertyGroup.NMakeIncludeSearchPath.Length -eq 0) { continue }
+			$condition = $propertyGroup.GetAttribute("Condition")
 
-			if (-not $propertyGroup.NMakeIncludeSearchPath.Contains("../Build/Win64/UE4/Inc/$ProjectName"))
+			if ($condition.Length -eq 0) { continue }
+
+			$match = $pgConditionRegex.Match($condition)
+
+			if (-not $match.Success -or ($match.Groups["Arch"].Value -ne "x64")) { continue }
+			
+			$buildType = $match.Groups["Type"].Value
+			$iPathSufix = if ($buildType -eq "Editor") { "Editor" } else { "" }
+			
+			if ($propertyGroup.IncludePath -eq $null) { continue }
+
+			$includePath = Resolve-Path "$root\Intermediate\Build\Win64\UE4$iPathSufix\Inc\$ProjectName"
+			if (-not $propertyGroup.IncludePath.Contains($includePath))
 			{
-				$propertyGroup.NMakeIncludeSearchPath += ";../Build/Win64/UE4/Inc/$ProjectName"
+				$propertyGroup.IncludePath += ";$includePath"
 			}
 
 			foreach ($plugin in $plugins)
 			{
-				if (-not $propertyGroup.NMakeIncludeSearchPath.Contains("../../Plugins/$plugin/Build/Win64/UE4/Inc/$plugin"))
+				$includePath = Resolve-Path "$root\Plugins\$plugin\Intermediate\Build\Win64\UE4$iPathSufix\Inc\$plugin"
+				if (-not $propertyGroup.IncludePath.Contains($includePath))
 				{
-					$propertyGroup.NMakeIncludeSearchPath += ";../../Plugins/$plugin/Build/Win64/UE4/Inc/$plugin"
+					$propertyGroup.IncludePath += ";$includePath"
 				}
 			}
 		}
