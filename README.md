@@ -1,6 +1,6 @@
 # UE4Scripts
 
-Requires TabExpansionPlusPlus, to intall:
+Requires TabExpansionPlusPlus, but it should get installed automatically, i guess. In case it won't you may do that:
 
 `PS> Install-Module TabExpansionPlusPlus`
 
