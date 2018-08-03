@@ -968,8 +968,45 @@ function Update-ProjectIncludes
 	}
 }
 
-foreach ($export in @("Set-Plugin", "Add-Class", "Add-Struct", "Add-UEnum", "Add-UStruct", "Add-UInterface", "Add-UClass",  "Update-Config", "Update-ProjectIncludes"))
+<#
+.SYNOPSIS
+Updates project file if it doesn't have include paths to .generated.h files.
+
+.DESCRIPTION
+Supports usage of configuration files for saving some parameter values. It should be placed to source root with name uesp.json for full support. Cfg file format:
+{
+  "CppsRoot": "<path to implementations>",
+  "HeadersRoot": "<path to public headers>",
+  "PrivateHeadersRoot": "<path to private headers>",
+  "ProjectRoot": "<path to the project root for header search and plugin system>"
+}
+#>
+function Update-Project
+{
+	[CmdletBinding()]
+	Param(
+		# Path to the config. Should be relative to cwd or to cwd/Source/$(cwd name). Should be a JSON object with fields CppsRoot, HeadersRoot, PrivateHeadersRoot, ProjectRoot
+		[Parameter()]
+		[String]$ConfigPath = "uesp.json",
+		# Name of the project file. Defaults to project root folder name.
+		[Parameter()]
+		[String]$ProjectName,
+		# Path to the engine root like "C:/Code/UE4/UE_4.20"
+		[Parameter(Mandatory=$true)]
+		[String]$EnginePath
+	)
+	begin
+	{
+		& "$EnginePath/Engine/Binaries/DotNET/UnrealBuildTool.exe" -projectfiles -project="C:/Code/UE4/SoD4X/SoD4X.uproject" -game -rocket -progress
+		Update-ProjectIncludes -ConfigPath $ConfigPath -ProjectName $ProjectName
+	}
+}
+
+foreach ($export in @("Set-Plugin", "Add-Class", "Add-Struct", "Add-UEnum", "Add-UStruct", "Add-UInterface", "Add-UClass", "Update-Config"))
 {
 	Export-ModuleMember -Function $export
 	Register-ArgumentCompleter -CommandName $export -ParameterName Plugin -ScriptBlock $PluginCompletion
 }
+
+Export-ModuleMember -Function Update-ProjectIncludes
+Export-ModuleMember -Function Update-Project
