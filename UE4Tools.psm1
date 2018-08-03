@@ -888,15 +888,72 @@ function Update-Config
 		}
 
 		if ($CppsRoot.Length -gt 0) { $cfg.cpps = $CppsRoot }
-		if ($PublicHeaders.Length -gt 0) { $cfg.cpps = $PublicHeaders }
-		if ($PrivateHeaders.Length -gt 0) { $cfg.cpps = $PrivateHeaders }
-		if ($Root.Length -gt 0) { $cfg.cpps = $Root }
+		if ($PublicHeaders.Length -gt 0) { $cfg.headers = $PublicHeaders }
+		if ($PrivateHeaders.Length -gt 0) { $cfg.privateHeaders = $PrivateHeaders }
+		if ($Root.Length -gt 0) { $cfg.root = $Root }
 
 		$cfg.Save()
 	}
 }
 
-foreach ($export in @("Set-Plugin", "Add-Class", "Add-Struct", "Add-UEnum", "Add-UStruct", "Add-UInterface", "Add-UClass",  "Update-Config"))
+<#
+.SYNOPSIS
+Updates project file if it doesn't have include paths to .generated.h files.
+
+.DESCRIPTION
+Supports usage of configuration files for saving some parameter values. It should be placed to source root with name uesp.json for full support. Cfg file format:
+{
+  "CppsRoot": "<path to implementations>",
+  "HeadersRoot": "<path to public headers>",
+  "PrivateHeadersRoot": "<path to private headers>",
+  "ProjectRoot": "<path to the project root for header search and plugin system>"
+}
+#>
+function Update-ProjectIncludes
+{
+	[CmdletBinding()]
+	Param(
+		# Path to the config. Should be relative to cwd or to cwd/Source/$(cwd name). Should be a JSON object with fields CppsRoot, HeadersRoot, PrivateHeadersRoot, ProjectRoot
+		[Parameter()]
+		[String]$ConfigPath = "uesp.json",
+		# Name of the project file. Defaults to project root folder name.
+		[Parameter()]
+		[String]$ProjectName
+	)
+	begin
+	{
+		$cfg = [UE4CfgFile]::New($ConfigPath)
+		$root = "$($cfg.location)/$($cfg.root)"
+		$plugins = Get-ChildItem "$root/Plugins"
+
+		if ($ProjectName.Length -eq 0) { $ProjectName = (Get-Item $root).BaseName }
+
+		$ProjectFileName = Resolve-Path "$root/Intermediate/ProjectFiles/$ProjectName.vcxproj"
+		[xml]$projectFile = Get-Content $ProjectFileName
+
+		foreach ($propertyGroup in $projectFile.Project.PropertyGroup)
+		{
+			if ($propertyGroup.NMakeIncludeSearchPath.Length -eq 0) { continue }
+
+			if (-not $propertyGroup.NMakeIncludeSearchPath.Contains("../Build/Win64/UE4/Inc/$ProjectName"))
+			{
+				$propertyGroup.NMakeIncludeSearchPath += ";../Build/Win64/UE4/Inc/$ProjectName"
+			}
+
+			foreach ($plugin in $plugins)
+			{
+				if (-not $propertyGroup.NMakeIncludeSearchPath.Contains("../../Plugins/$plugin/Build/Win64/UE4/Inc/$plugin"))
+				{
+					$propertyGroup.NMakeIncludeSearchPath += ";../../Plugins/$plugin/Build/Win64/UE4/Inc/$plugin"
+				}
+			}
+		}
+
+		$projectFile.Save($ProjectFileName)
+	}
+}
+
+foreach ($export in @("Set-Plugin", "Add-Class", "Add-Struct", "Add-UEnum", "Add-UStruct", "Add-UInterface", "Add-UClass",  "Update-Config", "Update-ProjectIncludes"))
 {
 	Export-ModuleMember -Function $export
 	Register-ArgumentCompleter -CommandName $export -ParameterName Plugin -ScriptBlock $PluginCompletion
