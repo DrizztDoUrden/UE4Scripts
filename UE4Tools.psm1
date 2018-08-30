@@ -956,7 +956,7 @@ function Update-ProjectIncludes
 
 			foreach ($plugin in $plugins)
 			{
-				$includePath = Resolve-Path "$root\Plugins\$plugin\Intermediate\Build\Win64\UE4$iPathSufix\Inc\$plugin"
+				$includePath = Resolve-Path "$root\Plugins\$($plugin.Name)\Intermediate\Build\Win64\UE4$iPathSufix\Inc\$($plugin.Name)"
 				if (-not $propertyGroup.IncludePath.Contains($includePath))
 				{
 					$propertyGroup.IncludePath += ";$includePath"
@@ -1002,7 +1002,9 @@ function Update-Project
 
 		if ($ProjectName.Length -eq 0) { $ProjectName = (Get-Item $root).BaseName }
 
-		& "$EnginePath/Engine/Binaries/DotNET/UnrealBuildTool.exe" -projectfiles -project="$root/$ProjectName.uproject" -game -rocket -progress
+		$project = Resolve-Path "$root/$ProjectName.uproject"
+		Write-Verbose "Project file: <$project>"
+		& "$EnginePath/Engine/Binaries/DotNET/UnrealBuildTool.exe" -projectfiles -project="$project" -game -rocket -progress
 		Update-ProjectIncludes -ConfigPath $ConfigPath -ProjectName $ProjectName
 	}
 }
